@@ -35,7 +35,7 @@ export const authResolvers = {
       const passwordHash = await hashPassword(input.password);
       const user = await createUser(context.pool, input.email, passwordHash);
 
-      (context as any).req.session.user = {
+      (context.req.session as any).user = {
         id: user.id,
         email: user.email,
       };
@@ -64,7 +64,7 @@ export const authResolvers = {
         throw new GraphQLError('Invalid email or password', { extensions: { code: 'BAD_REQUEST' } });
       }
 
-      (context as any).req.session.user = {
+      (context.req.session as any).user = {
         id: user.id,
         email: user.email,
       };
@@ -81,7 +81,7 @@ export const authResolvers = {
     signOut: (_: unknown, __: unknown, context: GraphQLContext) => {
       const user = requireAuth(context);
       return new Promise<boolean>((resolve, reject) => {
-        (context as any).req.session.destroy((err: any) => {
+        context.req.session.destroy((err: any) => {
           if (err) reject(err);
           else resolve(true);
         });

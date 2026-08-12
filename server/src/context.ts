@@ -9,6 +9,7 @@ export interface AuthUser {
 export interface GraphQLContext {
   pool: Pool;
   user: AuthUser | null;
+  req: Request;
 }
 
 export function createContext(req: Request, pool: Pool): GraphQLContext {
@@ -16,5 +17,6 @@ export function createContext(req: Request, pool: Pool): GraphQLContext {
   return {
     pool,
     user,
+    req,
   };
 }
