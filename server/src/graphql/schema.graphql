@@ -1,0 +1,139 @@
+type User {
+  id: ID!
+  email: String!
+  createdAt: String!
+}
+
+type AuthPayload {
+  user: User!
+}
+
+type Person {
+  id: ID!
+  name: String!
+  createdAt: String!
+}
+
+type TransactionCategory {
+  id: ID!
+  name: String!
+  createdAt: String!
+}
+
+type Account {
+  id: ID!
+  name: String!
+  description: String
+  people: [Person!]!
+  transactions(filter: TransactionFilter, limit: Int, offset: Int): [Transaction!]!
+  totals(filter: TransactionFilter): AccountTotals!
+  createdAt: String!
+}
+
+type AccountTotals {
+  totalCredits: Float!
+  totalDebits: Float!
+  net: Float!
+}
+
+type Transaction {
+  id: ID!
+  account: Account!
+  person: Person!
+  category: TransactionCategory!
+  amount: Float!
+  description: String
+  occurredOn: String!
+  createdAt: String!
+}
+
+input TransactionFilter {
+  personIds: [ID!]
+  categoryIds: [ID!]
+}
+
+input SignupInput {
+  email: String!
+  password: String!
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+input CreateAccountInput {
+  name: String!
+  description: String
+  personIds: [ID!]
+}
+
+input UpdateAccountInput {
+  name: String
+  description: String
+  personIds: [ID!]
+}
+
+input CreatePersonInput {
+  name: String!
+}
+
+input UpdatePersonInput {
+  name: String
+}
+
+input CreateCategoryInput {
+  name: String!
+}
+
+input UpdateCategoryInput {
+  name: String
+}
+
+input CreateTransactionInput {
+  accountId: ID!
+  personId: ID!
+  categoryId: ID!
+  amount: Float!
+  description: String
+  occurredOn: String
+}
+
+input UpdateTransactionInput {
+  personId: ID
+  categoryId: ID
+  amount: Float
+  description: String
+  occurredOn: String
+}
+
+type Query {
+  hello: String!
+  me: User
+  accounts: [Account!]!
+  account(id: ID!): Account
+  people: [Person!]!
+  transactionCategories: [TransactionCategory!]!
+}
+
+type Mutation {
+  signup(input: SignupInput!): AuthPayload!
+  signIn(input: SignInInput!): AuthPayload!
+  signOut: Boolean!
+
+  createAccount(input: CreateAccountInput!): Account!
+  updateAccount(id: ID!, input: UpdateAccountInput!): Account!
+  deleteAccount(id: ID!): Boolean!
+
+  createPerson(input: CreatePersonInput!): Person!
+  updatePerson(id: ID!, input: UpdatePersonInput!): Person!
+  deletePerson(id: ID!): Boolean!
+
+  createTransactionCategory(input: CreateCategoryInput!): TransactionCategory!
+  updateTransactionCategory(id: ID!, input: UpdateCategoryInput!): TransactionCategory!
+  deleteTransactionCategory(id: ID!): Boolean!
+
+  createTransaction(input: CreateTransactionInput!): Transaction!
+  updateTransaction(id: ID!, input: UpdateTransactionInput!): Transaction!
+  deleteTransaction(id: ID!): Boolean!
+}
