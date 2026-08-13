@@ -102,4 +102,6 @@ export const accountsResolvers = {
       return true;
     },
   },
+
+  Account: {},
 };
