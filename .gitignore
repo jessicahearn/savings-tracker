@@ -20,3 +20,6 @@ yarn-error.log*
 client/dist/
 server/dist/
 coverage/
+*.js
+*.js.map
+*.d.ts
