@@ -20,7 +20,8 @@ export const peopleResolvers = {
   Query: {
     people: async (_: unknown, __: unknown, context: GraphQLContext) => {
       requireAuth(context);
-      return getAllPeople(context.pool);
+      const people = await getAllPeople(context.pool);
+      return people.map((p) => ({ id: p.id, name: p.name, createdAt: p.created_at }));
     },
   },
   Mutation: {
@@ -30,7 +31,8 @@ export const peopleResolvers = {
       context: GraphQLContext
     ) => {
       requireAuth(context);
-      return createPerson(context.pool, input.name);
+      const person = await createPerson(context.pool, input.name);
+      return { id: person.id, name: person.name, createdAt: person.created_at };
     },
 
     updatePerson: async (
@@ -44,7 +46,11 @@ export const peopleResolvers = {
       if (!person) {
         throw new GraphQLError('Person not found', { extensions: { code: 'NOT_FOUND' } });
       }
-      return updatePerson(context.pool, personId, input.name || person.name);
+      const updated = await updatePerson(context.pool, personId, input.name || person.name);
+      if (!updated) {
+        throw new GraphQLError('Failed to update person', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      }
+      return { id: updated.id, name: updated.name, createdAt: updated.created_at };
     },
 
     deletePerson: async (

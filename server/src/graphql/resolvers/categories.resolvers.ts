@@ -20,7 +20,8 @@ export const categoriesResolvers = {
   Query: {
     transactionCategories: async (_: unknown, __: unknown, context: GraphQLContext) => {
       requireAuth(context);
-      return getAllCategories(context.pool);
+      const categories = await getAllCategories(context.pool);
+      return categories.map((c) => ({ id: c.id, name: c.name, createdAt: c.created_at }));
     },
   },
   Mutation: {
@@ -30,7 +31,8 @@ export const categoriesResolvers = {
       context: GraphQLContext
     ) => {
       requireAuth(context);
-      return createCategory(context.pool, input.name);
+      const category = await createCategory(context.pool, input.name);
+      return { id: category.id, name: category.name, createdAt: category.created_at };
     },
 
     updateTransactionCategory: async (
@@ -44,7 +46,11 @@ export const categoriesResolvers = {
       if (!category) {
         throw new GraphQLError('Category not found', { extensions: { code: 'NOT_FOUND' } });
       }
-      return updateCategory(context.pool, categoryId, input.name || category.name);
+      const updated = await updateCategory(context.pool, categoryId, input.name || category.name);
+      if (!updated) {
+        throw new GraphQLError('Failed to update category', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      }
+      return { id: updated.id, name: updated.name, createdAt: updated.created_at };
     },
 
     deleteTransactionCategory: async (
