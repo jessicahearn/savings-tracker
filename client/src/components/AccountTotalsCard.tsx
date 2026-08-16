@@ -10,11 +10,11 @@ interface AccountTotalsCardProps {
 export function AccountTotalsCard({ totals, people }: AccountTotalsCardProps) {
   return (
     <Row className="mb-4">
-      <Col md={6}>
+      <Col md={4}>
         <Card border="info">
           <Card.Body>
             <Card.Title>Net Total</Card.Title>
-            <h4 className="text-info">{formatEuro(totals.net)}</h4>
+            <h4 className="text-primary">{formatEuro(totals.net)}</h4>
           </Card.Body>
         </Card>
       </Col>
@@ -31,7 +31,7 @@ export function AccountTotalsCard({ totals, people }: AccountTotalsCardProps) {
           </Card.Body>
         </Card>
       </Col>
-      <Col md={2}>
+      <Col md={4}>
         <Card>
           <Card.Body>
             <Card.Title>People</Card.Title>

@@ -147,7 +147,7 @@ export function AccountsList() {
                 <td>{account.people.map((p) => p.name).join(', ') || '—'}</td>
                 <td>
                   <Button
-                    variant="info"
+                    variant="primary"
                     size="sm"
                     className="me-2"
                     onClick={() => navigate(`/accounts/${account.id}`)}
@@ -155,7 +155,7 @@ export function AccountsList() {
                     View
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline-primary"
                     size="sm"
                     className="me-2"
                     onClick={() => handleEditClick(account)}
@@ -163,7 +163,7 @@ export function AccountsList() {
                     Edit
                   </Button>
                   <Button
-                    variant="danger"
+                    variant="outline-primary"
                     size="sm"
                     onClick={() => handleDelete(account.id)}
                   >

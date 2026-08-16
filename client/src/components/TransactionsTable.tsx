@@ -31,17 +31,17 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
             <td>{t.occurredOn}</td>
             <td>{t.person.name}</td>
             <td>{t.category.name}</td>
-            <td style={{ textAlign: 'right' }}>
+            <td style={{ textAlign: 'right' }} className="transaction-amount">
               <span className={t.amount >= 0 ? 'text-success' : 'text-danger'}>
                 {formatEuroSigned(t.amount)}
               </span>
             </td>
             <td>{t.description || '—'}</td>
             <td>
-              <Button variant="secondary" size="sm" className="me-2" onClick={() => onEdit(t)}>
+              <Button variant="primary" size="sm" className="me-2" onClick={() => onEdit(t)}>
                 Edit
               </Button>
-              <Button variant="danger" size="sm" onClick={() => onDelete(t.id)}>
+              <Button variant="outline-primary" size="sm" onClick={() => onDelete(t.id)}>
                 Delete
               </Button>
             </td>

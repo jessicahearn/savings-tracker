@@ -137,7 +137,7 @@ export function EntityManager({
                 <td>{entity.name}</td>
                 <td>
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="sm"
                     className="me-2"
                     onClick={() => handleOpenEdit(entity)}
@@ -145,7 +145,7 @@ export function EntityManager({
                     Edit
                   </Button>
                   <Button
-                    variant="danger"
+                    variant="outline-primary"
                     size="sm"
                     onClick={() => handleDelete(entity.id)}
                     disabled={deletingId === entity.id}

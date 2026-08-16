@@ -17,19 +17,19 @@ export function NavBar() {
   };
 
   return (
-    <Navbar bg="light" expand="lg" className="border-bottom">
-      <Navbar.Brand href="/" className="fw-bold">
-        💰 Savings Tracker
+    <Navbar bg="primary" expand="lg" className="border-bottom p-3">
+      <Navbar.Brand href="/" className="fw-bold text-secondary">
+        € SAVINGS TRACKER
       </Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="ms-auto">
           {data?.me && (
             <>
-              <Nav.Link href="/">Accounts</Nav.Link>
-              <Nav.Link href="/people">People</Nav.Link>
-              <Nav.Link href="/categories">Categories</Nav.Link>
-              <Nav.Link onClick={handleSignOut}>Sign Out</Nav.Link>
+              <Nav.Link className="text-white" href="/">Accounts</Nav.Link>
+              <Nav.Link className="text-white" href="/people">People</Nav.Link>
+              <Nav.Link className="text-white" href="/categories">Categories</Nav.Link>
+              <Nav.Link className="text-white" onClick={handleSignOut}>Sign Out</Nav.Link>
             </>
           )}
         </Nav>

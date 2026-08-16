@@ -120,7 +120,7 @@ export function AccountDetail() {
   return (
     <div>
       <div className="mb-4">
-        <Button variant="secondary" onClick={() => navigate('/')} className="mb-3">
+        <Button variant="outline-primary" onClick={() => navigate('/')} className="mb-3">
           ← Back to Accounts
         </Button>
         <h2>{account.name}</h2>

@@ -1,0 +1,52 @@
+// Application stylesheet — the single CSS entry point, imported by main.tsx.
+//
+// Bootstrap is compiled from source here rather than loaded precompiled, because
+// theme colours cannot be changed from CSS alone: `.text-primary` reads
+// `var(--bs-primary-rgb)` at runtime, but `.btn-primary` bakes `--bs-btn-bg`
+// and its derived hover/active shades in as literal hex at build time. Setting
+// the Sass variables is the only way to recolour both consistently.
+//
+// Order matters and is load-bearing:
+//   1. functions   — override values may call Bootstrap helpers
+//   2. overrides   — every Bootstrap variable is `!default`, i.e. "unless set"
+//   3. bootstrap   — now built from the values above
+//   4. app styles  — last, so they can win
+
+// 1. ---------------------------------------------------------------- functions
+@import "bootstrap/scss/functions";
+
+// 2. ---------------------------------------------------------------- overrides
+
+// Brand palette.
+$primary: #576490; // rgb(87, 100, 144)  — muted slate blue
+$secondary: #a3bcf9; // rgb(163, 188, 249) — light periwinkle
+
+// Other theme colours keep Bootstrap's defaults. Uncomment to tune:
+// $success:  #2f9e44;
+// $danger:   #e03131;
+// $warning:  #f08c00;
+$info:     #D1D2F9;
+
+// Typography and shape. Uncomment to tune:
+$font-family-sans-serif: Calibri, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+// $border-radius: 0.5rem;
+
+// To add a NEW colour rather than override an existing one, the map-merge has to
+// happen after Bootstrap's variables and maps are loaded:
+//
+//   @import "bootstrap/scss/variables";
+//   @import "bootstrap/scss/maps";
+//   $theme-colors: map-merge($theme-colors, ("brand": #7048e8));
+//
+// which generates .text-brand, .bg-brand, .btn-brand, border="brand", etc.
+
+// 3. ---------------------------------------------------------------- bootstrap
+@import "bootstrap/scss/bootstrap";
+
+// 4. --------------------------------------------------------------- app styles
+
+// Money reads better in a table when the digits line up. Applied to the amount
+// column so the decimal points form a straight edge down the page.
+.transaction-amount {
+  font-variant-numeric: tabular-nums;
+}
