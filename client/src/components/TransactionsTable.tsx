@@ -1,15 +1,11 @@
 import { Table, Button } from 'react-bootstrap';
 import type { TransactionFieldsFragment } from '../graphql/generated';
+import { formatEuroSigned } from '../format';
 
 interface TransactionsTableProps {
   transactions: TransactionFieldsFragment[];
   onEdit: (transaction: TransactionFieldsFragment) => void;
   onDelete: (id: string) => void;
-}
-
-function formatAmount(amount: number): string {
-  const sign = amount >= 0 ? '+' : '-';
-  return `${sign}$${Math.abs(amount).toFixed(2)}`;
 }
 
 export function TransactionsTable({ transactions, onEdit, onDelete }: TransactionsTableProps) {
@@ -37,7 +33,7 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
             <td>{t.category.name}</td>
             <td style={{ textAlign: 'right' }}>
               <span className={t.amount >= 0 ? 'text-success' : 'text-danger'}>
-                {formatAmount(t.amount)}
+                {formatEuroSigned(t.amount)}
               </span>
             </td>
             <td>{t.description || '—'}</td>

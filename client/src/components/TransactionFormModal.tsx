@@ -109,7 +109,7 @@ export function TransactionFormModal({
             </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3" controlId="transaction-amount">
-            <Form.Label>Amount ($ - positive for deposits, negative for withdrawals) *</Form.Label>
+            <Form.Label>Amount (€ - positive for deposits, negative for withdrawals) *</Form.Label>
             <Form.Control
               type="number"
               step="0.01"

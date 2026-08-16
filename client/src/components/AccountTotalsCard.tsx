@@ -1,5 +1,6 @@
 import { Card, Row, Col, Badge } from 'react-bootstrap';
 import type { TotalsFieldsFragment, PersonFieldsFragment } from '../graphql/generated';
+import { formatEuro } from '../format';
 
 interface AccountTotalsCardProps {
   totals: TotalsFieldsFragment;
@@ -9,33 +10,28 @@ interface AccountTotalsCardProps {
 export function AccountTotalsCard({ totals, people }: AccountTotalsCardProps) {
   return (
     <Row className="mb-4">
-      <Col md={3}>
-        <Card>
+      <Col md={6}>
+        <Card border="info">
           <Card.Body>
-            <Card.Title>Deposits</Card.Title>
-            <h4 className="text-success">${totals.totalCredits.toFixed(2)}</h4>
+            <Card.Title>Net Total</Card.Title>
+            <h4 className="text-info">{formatEuro(totals.net)}</h4>
           </Card.Body>
         </Card>
       </Col>
-      <Col md={3}>
+      <Col md={4}>
         <Card>
           <Card.Body>
-            <Card.Title>Withdrawals</Card.Title>
-            <h4 className="text-danger">${Math.abs(totals.totalDebits).toFixed(2)}</h4>
+            <Card.Title>Transaction Totals</Card.Title>
+            <div>
+              Deposits: <span className="text-success">{formatEuro(totals.totalCredits)}</span>
+            </div>
+            <div>
+              Withdrawals: <span className="text-danger">{formatEuro(totals.totalDebits)}</span>
+            </div>
           </Card.Body>
         </Card>
       </Col>
-      <Col md={3}>
-        <Card>
-          <Card.Body>
-            <Card.Title>Net</Card.Title>
-            <h4 className={totals.net >= 0 ? 'text-success' : 'text-danger'}>
-              ${totals.net.toFixed(2)}
-            </h4>
-          </Card.Body>
-        </Card>
-      </Col>
-      <Col md={3}>
+      <Col md={2}>
         <Card>
           <Card.Body>
             <Card.Title>People</Card.Title>

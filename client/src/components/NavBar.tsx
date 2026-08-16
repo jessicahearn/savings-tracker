@@ -26,6 +26,7 @@ export function NavBar() {
         <Nav className="ms-auto">
           {data?.me && (
             <>
+              <Nav.Link href="/">Accounts</Nav.Link>
               <Nav.Link href="/people">People</Nav.Link>
               <Nav.Link href="/categories">Categories</Nav.Link>
               <Nav.Link onClick={handleSignOut}>Sign Out</Nav.Link>
