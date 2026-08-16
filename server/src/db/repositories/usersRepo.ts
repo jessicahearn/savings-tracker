@@ -1,4 +1,4 @@
-import { Pool, QueryResult } from 'pg';
+import { Pool } from 'pg';
 
 export interface User {
   id: number;
@@ -18,14 +18,20 @@ export async function getUserById(pool: Pool, id: number): Promise<User | null> 
   return result.rows[0] || null;
 }
 
-export async function createUser(
-  pool: Pool,
-  email: string,
-  passwordHash: string
-): Promise<User> {
+/**
+ * An object rather than two positional strings — `(email, passwordHash)` and
+ * `(passwordHash, email)` are both valid to the compiler, and getting them the
+ * wrong way round would store the hash as the address.
+ */
+export interface CreateUserData {
+  email: string;
+  passwordHash: string;
+}
+
+export async function createUser(pool: Pool, data: CreateUserData): Promise<User> {
   const result = await pool.query(
     'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *',
-    [email, passwordHash]
+    [data.email, data.passwordHash]
   );
   return result.rows[0];
 }

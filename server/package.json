@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "codegen": "graphql-codegen",
+    "codegen:watch": "graphql-codegen --watch",
     "start": "node dist/index.js",
     "migrate": "node-pg-migrate",
     "test": "vitest run"
@@ -24,6 +26,9 @@
     "pg": "^8.11.3"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^7.2.0",
+    "@graphql-codegen/typescript": "^6.1.0",
+    "@graphql-codegen/typescript-resolvers": "^6.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "4.17.17",

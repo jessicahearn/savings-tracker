@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql';
-import { GraphQLContext } from '../../context.js';
 import { requireAuth } from '../requireAuth.js';
+import { toAccount } from '../mappers.js';
+import type { QueryResolvers, MutationResolvers } from '../generated.js';
 import {
   getAllAccounts,
   getAccountById,
@@ -9,93 +10,62 @@ import {
   deleteAccount,
 } from '../../db/repositories/accountsRepo.js';
 
-export const accountsResolvers = {
-  Query: {
-    accounts: async (_: unknown, __: unknown, context: GraphQLContext) => {
-      requireAuth(context);
-      const accounts = await getAllAccounts(context.pool);
-      return accounts.map((account) => ({
-        id: account.id,
-        name: account.name,
-        description: account.description,
-        people: account.people,
-        createdAt: account.created_at,
-      }));
-    },
+function notFound(): never {
+  throw new GraphQLError('Account not found', { extensions: { code: 'NOT_FOUND' } });
+}
 
-    account: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-      requireAuth(context);
-      const accountId = parseInt(id, 10);
-      const account = await getAccountById(context.pool, accountId);
-      if (!account) {
-        throw new GraphQLError('Account not found', { extensions: { code: 'NOT_FOUND' } });
-      }
-      return {
-        id: account.id,
-        name: account.name,
-        description: account.description,
-        people: account.people,
-        createdAt: account.created_at,
-      };
-    },
+const Query: Pick<QueryResolvers, 'accounts' | 'account'> = {
+  accounts: async (_parent, _args, context) => {
+    requireAuth(context);
+    const accounts = await getAllAccounts(context.pool);
+    return accounts.map(toAccount);
   },
 
-  Mutation: {
-    createAccount: async (
-      _: unknown,
-      { input }: { input: { name: string; description?: string; personIds?: string[] } },
-      context: GraphQLContext
-    ) => {
-      requireAuth(context);
-      const personIds = (input.personIds || []).map((id) => parseInt(id, 10));
-      const account = await createAccount(context.pool, input.name, input.description || null, personIds);
-      return {
-        id: account.id,
-        name: account.name,
-        description: account.description,
-        people: account.people,
-        createdAt: account.created_at,
-      };
-    },
-
-    updateAccount: async (
-      _: unknown,
-      { id, input }: { id: string; input: { name?: string; description?: string; personIds?: string[] } },
-      context: GraphQLContext
-    ) => {
-      requireAuth(context);
-      const accountId = parseInt(id, 10);
-      const account = await getAccountById(context.pool, accountId);
-      if (!account) {
-        throw new GraphQLError('Account not found', { extensions: { code: 'NOT_FOUND' } });
-      }
-
-      const personIds = input.personIds ? input.personIds.map((id) => parseInt(id, 10)) : undefined;
-      const updatedAccount = await updateAccount(context.pool, accountId, input.name, input.description, personIds);
-      return {
-        id: updatedAccount.id,
-        name: updatedAccount.name,
-        description: updatedAccount.description,
-        people: updatedAccount.people,
-        createdAt: updatedAccount.created_at,
-      };
-    },
-
-    deleteAccount: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
-      requireAuth(context);
-      const accountId = parseInt(id, 10);
-      const account = await getAccountById(context.pool, accountId);
-      if (!account) {
-        throw new GraphQLError('Account not found', { extensions: { code: 'NOT_FOUND' } });
-      }
-
-      const deleted = await deleteAccount(context.pool, accountId);
-      if (!deleted) {
-        throw new GraphQLError('Failed to delete account', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-      }
-      return true;
-    },
+  account: async (_parent, { id }, context) => {
+    requireAuth(context);
+    const account = await getAccountById(context.pool, parseInt(id, 10));
+    if (!account) notFound();
+    return toAccount(account);
   },
-
-  Account: {},
 };
+
+const Mutation: Pick<MutationResolvers, 'createAccount' | 'updateAccount' | 'deleteAccount'> = {
+  createAccount: async (_parent, { input }, context) => {
+    requireAuth(context);
+    const account = await createAccount(context.pool, {
+      name: input.name,
+      description: input.description ?? null,
+      personIds: (input.personIds ?? []).map((id) => parseInt(id, 10)),
+    });
+    return toAccount(account);
+  },
+
+  updateAccount: async (_parent, { id, input }, context) => {
+    requireAuth(context);
+    const account = await updateAccount(context.pool, parseInt(id, 10), {
+      name: input.name ?? undefined,
+      description: input.description,
+      personIds: input.personIds ? input.personIds.map((pid) => parseInt(pid, 10)) : undefined,
+    });
+    if (!account) notFound();
+    return toAccount(account);
+  },
+
+  deleteAccount: async (_parent, { id }, context) => {
+    requireAuth(context);
+    const accountId = parseInt(id, 10);
+
+    const account = await getAccountById(context.pool, accountId);
+    if (!account) notFound();
+
+    const deleted = await deleteAccount(context.pool, accountId);
+    if (!deleted) {
+      throw new GraphQLError('Failed to delete account', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
+    }
+    return true;
+  },
+};
+
+export const accountsResolvers = { Query, Mutation };

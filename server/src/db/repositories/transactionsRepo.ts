@@ -35,6 +35,54 @@ export interface AccountTotals {
   net: number;
 }
 
+/** Fields accepted when creating a transaction. */
+export interface CreateTransactionData {
+  accountId: number;
+  personId: number;
+  categoryId: number;
+  amount: number;
+  description: string | null;
+  occurredOn?: string;
+}
+
+/** Fields accepted when updating; absent means "leave unchanged". */
+export interface UpdateTransactionData {
+  personId?: number;
+  categoryId?: number;
+  amount?: number;
+  description?: string | null;
+  occurredOn?: string;
+}
+
+/**
+ * Appends the shared personIds/categoryIds filter clauses to a query, returning
+ * the extended SQL and the next free parameter index. Used by both the list and
+ * the totals query so the two can never drift apart — if they did, the figures
+ * in the totals card would stop matching the rows below them.
+ */
+function applyFilter(
+  query: string,
+  params: unknown[],
+  filter: TransactionFilter | undefined,
+  prefix: string
+): { query: string; nextIndex: number } {
+  let nextIndex = params.length + 1;
+
+  if (filter?.personIds?.length) {
+    query += ` AND ${prefix}person_id = ANY($${nextIndex}::int[])`;
+    params.push(filter.personIds);
+    nextIndex++;
+  }
+
+  if (filter?.categoryIds?.length) {
+    query += ` AND ${prefix}category_id = ANY($${nextIndex}::int[])`;
+    params.push(filter.categoryIds);
+    nextIndex++;
+  }
+
+  return { query, nextIndex };
+}
+
 export async function getTransactionsByAccount(
   pool: Pool,
   accountId: number,
@@ -42,43 +90,33 @@ export async function getTransactionsByAccount(
   limit?: number,
   offset?: number
 ): Promise<TransactionWithRelations[]> {
-  let query = `
-    SELECT t.id, t.account_id, t.person_id, t.category_id, t.amount, t.description,
-           t.occurred_on, t.created_at, t.updated_at,
-           p.name AS person_name,
-           p.created_at AS person_created_at,
-           c.name AS category_name,
-           c.created_at AS category_created_at
-    FROM transactions t
-    INNER JOIN people p ON p.id = t.person_id
-    INNER JOIN transaction_categories c ON c.id = t.category_id
-    WHERE t.account_id = $1
-  `;
-  const params: any[] = [accountId];
-  let paramIndex = 2;
+  const params: unknown[] = [accountId];
 
-  if (filter?.personIds && filter.personIds.length > 0) {
-    query += ` AND t.person_id = ANY($${paramIndex}::int[])`;
-    params.push(filter.personIds);
-    paramIndex++;
-  }
-
-  if (filter?.categoryIds && filter.categoryIds.length > 0) {
-    query += ` AND t.category_id = ANY($${paramIndex}::int[])`;
-    params.push(filter.categoryIds);
-    paramIndex++;
-  }
+  let { query, nextIndex } = applyFilter(
+    `SELECT t.*,
+            p.name AS person_name,
+            p.created_at AS person_created_at,
+            c.name AS category_name,
+            c.created_at AS category_created_at
+     FROM transactions t
+     INNER JOIN people p ON p.id = t.person_id
+     INNER JOIN transaction_categories c ON c.id = t.category_id
+     WHERE t.account_id = $1`,
+    params,
+    filter,
+    't.'
+  );
 
   query += ` ORDER BY t.occurred_on DESC, t.created_at DESC`;
 
   if (limit !== undefined) {
-    query += ` LIMIT $${paramIndex}`;
+    query += ` LIMIT $${nextIndex}`;
     params.push(limit);
-    paramIndex++;
+    nextIndex++;
   }
 
   if (offset !== undefined) {
-    query += ` OFFSET $${paramIndex}`;
+    query += ` OFFSET $${nextIndex}`;
     params.push(offset);
   }
 
@@ -91,31 +129,21 @@ export async function getAccountTotals(
   accountId: number,
   filter?: TransactionFilter
 ): Promise<AccountTotals> {
-  let query = `
-    SELECT
-      COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0)::numeric AS total_credits,
-      COALESCE(SUM(amount) FILTER (WHERE amount < 0), 0)::numeric AS total_debits,
-      COALESCE(SUM(amount), 0)::numeric AS net
-    FROM transactions
-    WHERE account_id = $1
-  `;
-  const params: any[] = [accountId];
-  let paramIndex = 2;
+  const params: unknown[] = [accountId];
 
-  if (filter?.personIds && filter.personIds.length > 0) {
-    query += ` AND person_id = ANY($${paramIndex}::int[])`;
-    params.push(filter.personIds);
-    paramIndex++;
-  }
+  const { query } = applyFilter(
+    `SELECT
+       COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0)::numeric AS total_credits,
+       COALESCE(SUM(amount) FILTER (WHERE amount < 0), 0)::numeric AS total_debits,
+       COALESCE(SUM(amount), 0)::numeric AS net
+     FROM transactions
+     WHERE account_id = $1`,
+    params,
+    filter,
+    ''
+  );
 
-  if (filter?.categoryIds && filter.categoryIds.length > 0) {
-    query += ` AND category_id = ANY($${paramIndex}::int[])`;
-    params.push(filter.categoryIds);
-    paramIndex++;
-  }
-
-  const result = await pool.query(query, params);
-  const row = result.rows[0];
+  const row = (await pool.query(query, params)).rows[0];
 
   return {
     totalCredits: parseFloat(row.total_credits) || 0,
@@ -125,28 +153,26 @@ export async function getAccountTotals(
 }
 
 export async function getTransactionById(pool: Pool, id: number): Promise<Transaction | null> {
-  const result = await pool.query(
-    `SELECT id, account_id, person_id, category_id, amount, description, occurred_on, created_at, updated_at
-     FROM transactions WHERE id = $1`,
-    [id]
-  );
+  const result = await pool.query(`SELECT * FROM transactions WHERE id = $1`, [id]);
   return result.rows[0] || null;
 }
 
 export async function createTransaction(
   pool: Pool,
-  accountId: number,
-  personId: number,
-  categoryId: number,
-  amount: number,
-  description: string | null,
-  occurredOn?: string
+  data: CreateTransactionData
 ): Promise<Transaction> {
   const result = await pool.query(
     `INSERT INTO transactions (account_id, person_id, category_id, amount, description, occurred_on)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, account_id, person_id, category_id, amount, description, occurred_on, created_at, updated_at`,
-    [accountId, personId, categoryId, amount, description, occurredOn || new Date().toISOString().split('T')[0]]
+     VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
+     RETURNING *`,
+    [
+      data.accountId,
+      data.personId,
+      data.categoryId,
+      data.amount,
+      data.description,
+      data.occurredOn ?? null,
+    ]
   );
   return result.rows[0];
 }
@@ -154,28 +180,23 @@ export async function createTransaction(
 export async function updateTransaction(
   pool: Pool,
   id: number,
-  personId?: number,
-  categoryId?: number,
-  amount?: number,
-  description?: string | null,
-  occurredOn?: string
+  data: UpdateTransactionData
 ): Promise<Transaction | null> {
-  const transaction = await getTransactionById(pool, id);
-  if (!transaction) {
-    return null;
-  }
+  const existing = await getTransactionById(pool, id);
+  if (!existing) return null;
 
   const result = await pool.query(
     `UPDATE transactions
-     SET person_id = $1, category_id = $2, amount = $3, description = $4, occurred_on = $5, updated_at = now()
+     SET person_id = $1, category_id = $2, amount = $3, description = $4,
+         occurred_on = $5, updated_at = now()
      WHERE id = $6
-     RETURNING id, account_id, person_id, category_id, amount, description, occurred_on, created_at, updated_at`,
+     RETURNING *`,
     [
-      personId !== undefined ? personId : transaction.person_id,
-      categoryId !== undefined ? categoryId : transaction.category_id,
-      amount !== undefined ? amount : parseFloat(transaction.amount),
-      description !== undefined ? description : transaction.description,
-      occurredOn !== undefined ? occurredOn : transaction.occurred_on,
+      data.personId ?? existing.person_id,
+      data.categoryId ?? existing.category_id,
+      data.amount ?? parseFloat(existing.amount),
+      data.description !== undefined ? data.description : existing.description,
+      data.occurredOn ?? existing.occurred_on,
       id,
     ]
   );
