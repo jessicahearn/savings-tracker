@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { GraphQLContext } from '../../context.js';
+import { requireAuth } from '../requireAuth.js';
 import {
   getAllCategories,
   getCategoryById,
@@ -8,13 +9,6 @@ import {
   deleteCategory,
   getTransactionCountForCategory,
 } from '../../db/repositories/categoriesRepo.js';
-
-function requireAuth(context: GraphQLContext) {
-  if (!context.user) {
-    throw new GraphQLError('Unauthenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-  }
-  return context.user;
-}
 
 export const categoriesResolvers = {
   Query: {

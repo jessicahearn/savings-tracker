@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { GraphQLContext } from '../../context.js';
+import { requireAuth } from '../requireAuth.js';
 import {
   getTransactionsByAccount,
   getAccountTotals,
@@ -12,18 +13,35 @@ import { getAccountById } from '../../db/repositories/accountsRepo.js';
 import { getPersonById } from '../../db/repositories/peopleRepo.js';
 import { getCategoryById } from '../../db/repositories/categoriesRepo.js';
 
-function requireAuth(context: GraphQLContext) {
-  if (!context.user) {
-    throw new GraphQLError('Unauthenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-  }
-  return context.user;
-}
-
 function parseTransactionFilter(filter?: any) {
   if (!filter) return undefined;
   return {
     personIds: filter.personIds ? filter.personIds.map((id: string) => parseInt(id, 10)) : undefined,
     categoryIds: filter.categoryIds ? filter.categoryIds.map((id: string) => parseInt(id, 10)) : undefined,
+  };
+}
+
+/**
+ * Every path that returns a Transaction builds it here, with `person` and
+ * `category` already populated. Because they are always present there is no
+ * Transaction.person/.category field resolver — graphql-js falls through to the
+ * default resolver and simply reads these keys, so listing a page of
+ * transactions costs one query instead of one-per-row-per-relation.
+ */
+function toTransaction(
+  row: { id: number; account_id: number; person_id: number; category_id: number; amount: string; description: string | null; occurred_on: string; created_at: string },
+  person: { id: number; name: string; created_at: string },
+  category: { id: number; name: string; created_at: string }
+) {
+  return {
+    id: row.id,
+    accountId: row.account_id,
+    amount: parseFloat(row.amount),
+    description: row.description,
+    occurredOn: row.occurred_on,
+    createdAt: row.created_at,
+    person: { id: person.id, name: person.name, createdAt: person.created_at },
+    category: { id: category.id, name: category.name, createdAt: category.created_at },
   };
 }
 
@@ -76,16 +94,8 @@ export const transactionsResolvers = {
         input.occurredOn
       );
 
-      return {
-        id: transaction.id,
-        accountId: transaction.account_id,
-        personId: transaction.person_id,
-        categoryId: transaction.category_id,
-        amount: parseFloat(transaction.amount),
-        description: transaction.description,
-        occurredOn: transaction.occurred_on,
-        createdAt: transaction.created_at,
-      };
+      // person and category were already fetched above for validation.
+      return toTransaction(transaction, person, category);
     },
 
     updateTransaction: async (
@@ -141,16 +151,20 @@ export const transactionsResolvers = {
         throw new GraphQLError('Failed to update transaction', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
       }
 
-      return {
-        id: updated.id,
-        accountId: updated.account_id,
-        personId: updated.person_id,
-        categoryId: updated.category_id,
-        amount: parseFloat(updated.amount),
-        description: updated.description,
-        occurredOn: updated.occurred_on,
-        createdAt: updated.created_at,
-      };
+      // Read from the updated row rather than the input, so an unchanged
+      // person/category still comes back populated.
+      const [person, category] = await Promise.all([
+        getPersonById(context.pool, updated.person_id),
+        getCategoryById(context.pool, updated.category_id),
+      ]);
+
+      if (!person || !category) {
+        throw new GraphQLError('Failed to load updated transaction', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        });
+      }
+
+      return toTransaction(updated, person, category);
     },
 
     deleteTransaction: async (_: unknown, { id }: { id: string }, context: GraphQLContext) => {
@@ -178,16 +192,13 @@ export const transactionsResolvers = {
     ) => {
       const parsedFilter = parseTransactionFilter(filter);
       const transactions = await getTransactionsByAccount(context.pool, parent.id, parsedFilter, limit, offset);
-      return transactions.map((t) => ({
-        id: t.id,
-        accountId: t.account_id,
-        personId: t.person_id,
-        categoryId: t.category_id,
-        amount: parseFloat(t.amount),
-        description: t.description,
-        occurredOn: t.occurred_on,
-        createdAt: t.created_at,
-      }));
+      return transactions.map((t) =>
+        toTransaction(
+          t,
+          { id: t.person_id, name: t.person_name, created_at: t.person_created_at },
+          { id: t.category_id, name: t.category_name, created_at: t.category_created_at }
+        )
+      );
     },
 
     totals: async (parent: any, { filter }: { filter?: any }, context: GraphQLContext) => {
@@ -216,28 +227,8 @@ export const transactionsResolvers = {
       };
     },
 
-    person: async (parent: any, _: unknown, context: GraphQLContext) => {
-      const person = await getPersonById(context.pool, parent.personId);
-      if (!person) {
-        throw new GraphQLError('Person not found', { extensions: { code: 'NOT_FOUND' } });
-      }
-      return {
-        id: person.id,
-        name: person.name,
-        createdAt: person.created_at,
-      };
-    },
-
-    category: async (parent: any, _: unknown, context: GraphQLContext) => {
-      const category = await getCategoryById(context.pool, parent.categoryId);
-      if (!category) {
-        throw new GraphQLError('Category not found', { extensions: { code: 'NOT_FOUND' } });
-      }
-      return {
-        id: category.id,
-        name: category.name,
-        createdAt: category.created_at,
-      };
-    },
+    // No person/category resolvers here on purpose — every path that produces a
+    // Transaction populates them via toTransaction(), so the default resolver
+    // reads them directly. Adding them back would reintroduce the N+1.
   },
 };

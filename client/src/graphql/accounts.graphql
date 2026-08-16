@@ -1,0 +1,33 @@
+query GetAccounts {
+  accounts {
+    ...AccountFields
+  }
+}
+
+query GetAccountDetail($id: ID!, $filter: TransactionFilter, $limit: Int, $offset: Int) {
+  account(id: $id) {
+    ...AccountFields
+    transactions(filter: $filter, limit: $limit, offset: $offset) {
+      ...TransactionFields
+    }
+    totals(filter: $filter) {
+      ...TotalsFields
+    }
+  }
+}
+
+mutation CreateAccount($input: CreateAccountInput!) {
+  createAccount(input: $input) {
+    ...AccountFields
+  }
+}
+
+mutation UpdateAccount($id: ID!, $input: UpdateAccountInput!) {
+  updateAccount(id: $id, input: $input) {
+    ...AccountFields
+  }
+}
+
+mutation DeleteAccount($id: ID!) {
+  deleteAccount(id: $id)
+}

@@ -1,0 +1,15 @@
+mutation CreateTransaction($input: CreateTransactionInput!) {
+  createTransaction(input: $input) {
+    ...TransactionFields
+  }
+}
+
+mutation UpdateTransaction($id: ID!, $input: UpdateTransactionInput!) {
+  updateTransaction(id: $id, input: $input) {
+    ...TransactionFields
+  }
+}
+
+mutation DeleteTransaction($id: ID!) {
+  deleteTransaction(id: $id)
+}

@@ -45,3 +45,16 @@ export async function getTransactionCountForPerson(pool: Pool, personId: number)
   );
   return parseInt(result.rows[0].count, 10);
 }
+
+/**
+ * account_people.person_id is ON DELETE RESTRICT, so account membership blocks a
+ * delete just as transactions do. Without this check the DELETE reaches Postgres
+ * and surfaces a raw foreign-key violation instead of a readable message.
+ */
+export async function getAccountCountForPerson(pool: Pool, personId: number): Promise<number> {
+  const result = await pool.query(
+    'SELECT COUNT(*) FROM account_people WHERE person_id = $1',
+    [personId]
+  );
+  return parseInt(result.rows[0].count, 10);
+}

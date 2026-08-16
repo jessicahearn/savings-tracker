@@ -1,0 +1,28 @@
+query Me {
+  me {
+    id
+    email
+  }
+}
+
+mutation SignIn($input: SignInInput!) {
+  signIn(input: $input) {
+    user {
+      id
+      email
+    }
+  }
+}
+
+mutation Signup($input: SignupInput!) {
+  signup(input: $input) {
+    user {
+      id
+      email
+    }
+  }
+}
+
+mutation SignOut {
+  signOut
+}

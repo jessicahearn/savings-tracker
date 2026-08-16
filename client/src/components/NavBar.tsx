@@ -1,25 +1,10 @@
 import { Navbar, Nav } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, gql } from '@apollo/client';
-
-const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      email
-    }
-  }
-`;
-
-const SIGN_OUT_MUTATION = gql`
-  mutation SignOut {
-    signOut
-  }
-`;
+import { useMeQuery, useSignOutMutation } from '../graphql/generated';
 
 export function NavBar() {
-  const { data } = useQuery(ME_QUERY);
-  const [signOut] = useMutation(SIGN_OUT_MUTATION);
+  const { data } = useMeQuery();
+  const [signOut] = useSignOutMutation();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {

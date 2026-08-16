@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { GraphQLContext } from '../../context.js';
+import { requireAuth } from '../requireAuth.js';
 import {
   getAllPeople,
   getPersonById,
@@ -7,14 +8,8 @@ import {
   updatePerson,
   deletePerson,
   getTransactionCountForPerson,
+  getAccountCountForPerson,
 } from '../../db/repositories/peopleRepo.js';
-
-function requireAuth(context: GraphQLContext) {
-  if (!context.user) {
-    throw new GraphQLError('Unauthenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-  }
-  return context.user;
-}
 
 export const peopleResolvers = {
   Query: {
@@ -65,11 +60,24 @@ export const peopleResolvers = {
         throw new GraphQLError('Person not found', { extensions: { code: 'NOT_FOUND' } });
       }
 
-      const transactionCount = await getTransactionCountForPerson(context.pool, personId);
-      if (transactionCount > 0) {
-        throw new GraphQLError(`Cannot delete person — still has ${transactionCount} transaction(s)`, {
-          extensions: { code: 'CONFLICT' },
-        });
+      // Both transactions.person_id and account_people.person_id are ON DELETE
+      // RESTRICT. Check both so the user gets a readable reason rather than a
+      // raw Postgres foreign-key violation.
+      const [transactionCount, accountCount] = await Promise.all([
+        getTransactionCountForPerson(context.pool, personId),
+        getAccountCountForPerson(context.pool, personId),
+      ]);
+
+      const blockers: string[] = [];
+      if (transactionCount > 0) blockers.push(`${transactionCount} transaction(s)`);
+      if (accountCount > 0) blockers.push(`${accountCount} account(s)`);
+
+      if (blockers.length > 0) {
+        throw new GraphQLError(
+          `Cannot delete person — still linked to ${blockers.join(' and ')}. ` +
+            'Remove those first.',
+          { extensions: { code: 'CONFLICT' } }
+        );
       }
 
       const deleted = await deletePerson(context.pool, personId);

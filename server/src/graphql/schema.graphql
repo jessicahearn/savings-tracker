@@ -108,7 +108,6 @@ input UpdateTransactionInput {
 }
 
 type Query {
-  hello: String!
   me: User
   accounts: [Account!]!
   account(id: ID!): Account

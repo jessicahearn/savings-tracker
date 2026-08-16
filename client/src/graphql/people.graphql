@@ -1,0 +1,21 @@
+query GetPeople {
+  people {
+    ...PersonFields
+  }
+}
+
+mutation CreatePerson($input: CreatePersonInput!) {
+  createPerson(input: $input) {
+    ...PersonFields
+  }
+}
+
+mutation UpdatePerson($id: ID!, $input: UpdatePersonInput!) {
+  updatePerson(id: $id, input: $input) {
+    ...PersonFields
+  }
+}
+
+mutation DeletePerson($id: ID!) {
+  deletePerson(id: $id)
+}

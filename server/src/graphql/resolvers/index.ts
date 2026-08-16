@@ -6,7 +6,6 @@ import { transactionsResolvers } from './transactions.resolvers.js';
 
 export const resolvers = {
   Query: {
-    hello: () => 'Hello World',
     ...authResolvers.Query,
     ...peopleResolvers.Query,
     ...categoriesResolvers.Query,
@@ -20,7 +19,6 @@ export const resolvers = {
     ...transactionsResolvers.Mutation,
   },
   Account: {
-    ...accountsResolvers.Account,
     ...transactionsResolvers.Account,
   },
   Transaction: {

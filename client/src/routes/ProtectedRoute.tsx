@@ -1,18 +1,9 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client';
-
-const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      email
-    }
-  }
-`;
+import { useMeQuery } from '../graphql/generated';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { data, loading } = useQuery(ME_QUERY);
+  const { data, loading } = useMeQuery();
 
   if (loading) {
     return <div className="p-4">Loading...</div>;

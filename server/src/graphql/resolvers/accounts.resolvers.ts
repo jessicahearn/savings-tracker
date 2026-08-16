@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { GraphQLContext } from '../../context.js';
+import { requireAuth } from '../requireAuth.js';
 import {
   getAllAccounts,
   getAccountById,
@@ -7,13 +8,6 @@ import {
   updateAccount,
   deleteAccount,
 } from '../../db/repositories/accountsRepo.js';
-
-function requireAuth(context: GraphQLContext) {
-  if (!context.user) {
-    throw new GraphQLError('Unauthenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-  }
-  return context.user;
-}
 
 export const accountsResolvers = {
   Query: {

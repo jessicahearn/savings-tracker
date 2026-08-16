@@ -2,6 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Container } from 'react-bootstrap';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { NavBar } from './components/NavBar';
+import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
+import { AccountsList } from './pages/AccountsList';
+import { AccountDetail } from './pages/AccountDetail';
+import { PeopleManagement } from './pages/PeopleManagement';
+import { CategoriesManagement } from './pages/CategoriesManagement';
 
 export function App() {
   return (
@@ -9,13 +15,13 @@ export function App() {
       <NavBar />
       <Container className="py-4">
         <Routes>
-          <Route path="/login" element={<div>Login Page (TODO)</div>} />
-          <Route path="/signup" element={<div>Signup Page (TODO)</div>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                <div>Accounts List (TODO)</div>
+                <AccountsList />
               </ProtectedRoute>
             }
           />
@@ -23,7 +29,7 @@ export function App() {
             path="/accounts/:id"
             element={
               <ProtectedRoute>
-                <div>Account Detail (TODO)</div>
+                <AccountDetail />
               </ProtectedRoute>
             }
           />
@@ -31,7 +37,7 @@ export function App() {
             path="/people"
             element={
               <ProtectedRoute>
-                <div>People Management (TODO)</div>
+                <PeopleManagement />
               </ProtectedRoute>
             }
           />
@@ -39,7 +45,7 @@ export function App() {
             path="/categories"
             element={
               <ProtectedRoute>
-                <div>Categories Management (TODO)</div>
+                <CategoriesManagement />
               </ProtectedRoute>
             }
           />

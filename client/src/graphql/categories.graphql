@@ -1,0 +1,21 @@
+query GetCategories {
+  transactionCategories {
+    ...CategoryFields
+  }
+}
+
+mutation CreateCategory($input: CreateCategoryInput!) {
+  createTransactionCategory(input: $input) {
+    ...CategoryFields
+  }
+}
+
+mutation UpdateCategory($id: ID!, $input: UpdateCategoryInput!) {
+  updateTransactionCategory(id: $id, input: $input) {
+    ...CategoryFields
+  }
+}
+
+mutation DeleteCategory($id: ID!) {
+  deleteTransactionCategory(id: $id)
+}

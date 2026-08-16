@@ -1,0 +1,41 @@
+fragment PersonFields on Person {
+  id
+  name
+  createdAt
+}
+
+fragment CategoryFields on TransactionCategory {
+  id
+  name
+  createdAt
+}
+
+fragment TotalsFields on AccountTotals {
+  totalCredits
+  totalDebits
+  net
+}
+
+fragment AccountFields on Account {
+  id
+  name
+  description
+  createdAt
+  people {
+    ...PersonFields
+  }
+}
+
+fragment TransactionFields on Transaction {
+  id
+  amount
+  description
+  occurredOn
+  createdAt
+  person {
+    ...PersonFields
+  }
+  category {
+    ...CategoryFields
+  }
+}

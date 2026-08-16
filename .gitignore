@@ -20,6 +20,13 @@ yarn-error.log*
 client/dist/
 server/dist/
 coverage/
-*.js
-*.js.map
-*.d.ts
+
+# Stray tsc output next to sources (src/ should only ever contain .ts/.tsx)
+client/src/**/*.js
+client/src/**/*.js.map
+client/src/**/*.d.ts
+client/src/**/*.d.ts.map
+server/src/**/*.js
+server/src/**/*.js.map
+server/src/**/*.d.ts
+server/src/**/*.d.ts.map

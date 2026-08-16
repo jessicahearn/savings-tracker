@@ -1,4 +1,7 @@
 import { Pool } from 'pg';
+import { installDateTypeParsers } from './typeParsers.js';
+
+installDateTypeParsers();
 
 export function createPool(): Pool {
   const databaseUrl = process.env.DATABASE_URL;

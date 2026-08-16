@@ -1,23 +1,24 @@
 import { GraphQLError } from 'graphql';
 import { GraphQLContext } from '../../context.js';
+import { requireAuth } from '../requireAuth.js';
 import { hashPassword, verifyPassword } from '../../auth/password.js';
 import { getUserByEmail, getUserById, createUser } from '../../db/repositories/usersRepo.js';
 
-function requireAuth(context: GraphQLContext) {
-  if (!context.user) {
-    throw new GraphQLError('Unauthenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-  }
-  return context.user;
-}
-
 export const authResolvers = {
   Query: {
-    me: (_: unknown, __: unknown, context: GraphQLContext) => {
+    me: async (_: unknown, __: unknown, context: GraphQLContext) => {
       if (!context.user) return null;
+
+      // The session only carries { id, email }, so read the row for the real
+      // createdAt. This also returns null for a session whose user has since
+      // been deleted, which sends the client back to /login.
+      const user = await getUserById(context.pool, context.user.id);
+      if (!user) return null;
+
       return {
-        id: context.user.id,
-        email: context.user.email,
-        createdAt: new Date().toISOString(),
+        id: user.id,
+        email: user.email,
+        createdAt: user.created_at,
       };
     },
   },
@@ -79,7 +80,7 @@ export const authResolvers = {
     },
 
     signOut: (_: unknown, __: unknown, context: GraphQLContext) => {
-      const user = requireAuth(context);
+      requireAuth(context);
       return new Promise<boolean>((resolve, reject) => {
         context.req.session.destroy((err: any) => {
           if (err) reject(err);

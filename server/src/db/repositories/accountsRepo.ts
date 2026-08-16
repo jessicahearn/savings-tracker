@@ -9,7 +9,10 @@ export interface Account {
 }
 
 export interface AccountWithPeople extends Account {
-  people: Array<{ id: number; name: string }>;
+  // Shaped for GraphQL directly (createdAt, not created_at) because the accounts
+  // resolver passes these rows straight through as Person objects. Person.createdAt
+  // is non-nullable, so omitting it nulls out the whole account.
+  people: Array<{ id: number; name: string; createdAt: string }>;
 }
 
 export async function getAllAccounts(pool: Pool): Promise<AccountWithPeople[]> {
@@ -29,7 +32,7 @@ export async function getAllAccounts(pool: Pool): Promise<AccountWithPeople[]> {
   const accountsWithPeople = await Promise.all(
     accounts.map(async (account) => {
       const peopleResult = await pool.query(
-        `SELECT p.id, p.name FROM people p
+        `SELECT p.id, p.name, p.created_at AS "createdAt" FROM people p
          INNER JOIN account_people ap ON p.id = ap.person_id
          WHERE ap.account_id = $1
          ORDER BY p.name`,
@@ -58,7 +61,7 @@ export async function getAccountById(pool: Pool, id: number): Promise<AccountWit
   const account = result.rows[0] as Account;
 
   const peopleResult = await pool.query(
-    `SELECT p.id, p.name FROM people p
+    `SELECT p.id, p.name, p.created_at AS "createdAt" FROM people p
      INNER JOIN account_people ap ON p.id = ap.person_id
      WHERE ap.account_id = $1
      ORDER BY p.name`,
@@ -101,7 +104,7 @@ export async function createAccount(
     await client.query('COMMIT');
 
     const peopleResult = await pool.query(
-      `SELECT p.id, p.name FROM people p
+      `SELECT p.id, p.name, p.created_at AS "createdAt" FROM people p
        INNER JOIN account_people ap ON p.id = ap.person_id
        WHERE ap.account_id = $1
        ORDER BY p.name`,
@@ -163,7 +166,7 @@ export async function updateAccount(
     await client.query('COMMIT');
 
     const peopleResult = await pool.query(
-      `SELECT p.id, p.name FROM people p
+      `SELECT p.id, p.name, p.created_at AS "createdAt" FROM people p
        INNER JOIN account_people ap ON p.id = ap.person_id
        WHERE ap.account_id = $1
        ORDER BY p.name`,

@@ -44,6 +44,24 @@ A self-hosted app to track household savings, attributed to different savings po
    npm run dev
    ```
 
+### Query Database
+
+```
+docker compose exec postgres psql -U savings_tracker -d savings_tracker_dev
+```
+
+```
+\dt
+```
+
+```
+\d transactions
+```
+
+```
+SELECT * FROM transactions;
+```
+
 The server runs at http://localhost:4000 and the client at http://localhost:5173 (Vite dev server).
 
 ## Project Structure
