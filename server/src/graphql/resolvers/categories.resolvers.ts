@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { requireAuth } from '../requireAuth.js';
+import { assertDeletable } from '../assertDeletable.js';
 import { toCategory } from '../mappers.js';
 import type { QueryResolvers, MutationResolvers } from '../generated.js';
 import {
@@ -9,6 +10,7 @@ import {
   updateCategory,
   deleteCategory,
   getTransactionCountForCategory,
+  getScenarioEventCountForCategory,
 } from '../../db/repositories/categoriesRepo.js';
 
 function notFound(): never {
@@ -55,15 +57,17 @@ const Mutation: Pick<
     const category = await getCategoryById(context.pool, categoryId);
     if (!category) notFound();
 
-    // transactions.category_id is ON DELETE RESTRICT. Categories are not
-    // referenced by any other table, so transactions are the only blocker.
-    const transactionCount = await getTransactionCountForCategory(context.pool, categoryId);
-    if (transactionCount > 0) {
-      throw new GraphQLError(
-        `Cannot delete category — still has ${transactionCount} transaction(s). Remove those first.`,
-        { extensions: { code: 'CONFLICT' } }
-      );
-    }
+    // Two tables reference categories, both ON DELETE RESTRICT: transactions
+    // and scenario_events.
+    const [transactionCount, scenarioEventCount] = await Promise.all([
+      getTransactionCountForCategory(context.pool, categoryId),
+      getScenarioEventCountForCategory(context.pool, categoryId),
+    ]);
+
+    assertDeletable('category', [
+      { count: transactionCount, noun: 'transaction' },
+      { count: scenarioEventCount, noun: 'scenario event' },
+    ]);
 
     const deleted = await deleteCategory(context.pool, categoryId);
     if (!deleted) {

@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { requireAuth } from '../requireAuth.js';
+import { assertDeletable } from '../assertDeletable.js';
 import { toPerson } from '../mappers.js';
 import type { QueryResolvers, MutationResolvers } from '../generated.js';
 import {
@@ -10,6 +11,7 @@ import {
   deletePerson,
   getTransactionCountForPerson,
   getAccountCountForPerson,
+  getScenarioEventCountForPerson,
 } from '../../db/repositories/peopleRepo.js';
 
 function notFound(): never {
@@ -53,24 +55,20 @@ const Mutation: Pick<MutationResolvers, 'createPerson' | 'updatePerson' | 'delet
     const person = await getPersonById(context.pool, personId);
     if (!person) notFound();
 
-    // Both transactions.person_id and account_people.person_id are ON DELETE
-    // RESTRICT. Check both so the user gets a readable reason rather than a
-    // raw Postgres foreign-key violation.
-    const [transactionCount, accountCount] = await Promise.all([
+    // Three tables reference people, all ON DELETE RESTRICT: transactions,
+    // account_people and scenario_events. Each needs counting here, or the
+    // DELETE reaches Postgres and raises a raw foreign-key violation.
+    const [transactionCount, accountCount, scenarioEventCount] = await Promise.all([
       getTransactionCountForPerson(context.pool, personId),
       getAccountCountForPerson(context.pool, personId),
+      getScenarioEventCountForPerson(context.pool, personId),
     ]);
 
-    const blockers: string[] = [];
-    if (transactionCount > 0) blockers.push(`${transactionCount} transaction(s)`);
-    if (accountCount > 0) blockers.push(`${accountCount} account(s)`);
-
-    if (blockers.length > 0) {
-      throw new GraphQLError(
-        `Cannot delete person — still linked to ${blockers.join(' and ')}. Remove those first.`,
-        { extensions: { code: 'CONFLICT' } }
-      );
-    }
+    assertDeletable('person', [
+      { count: transactionCount, noun: 'transaction' },
+      { count: accountCount, noun: 'account' },
+      { count: scenarioEventCount, noun: 'scenario event' },
+    ]);
 
     const deleted = await deletePerson(context.pool, personId);
     if (!deleted) {
