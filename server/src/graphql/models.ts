@@ -24,7 +24,13 @@ import type {
   Account as SchemaAccount,
   AccountTotals as SchemaAccountTotals,
   AuthPayload as SchemaAuthPayload,
+  GridCell as SchemaGridCell,
+  GridData as SchemaGridData,
+  GridRow as SchemaGridRow,
   Person as SchemaPerson,
+  Scenario as SchemaScenario,
+  ScenarioEvent as SchemaScenarioEvent,
+  ScenarioGrid as SchemaScenarioGrid,
   Transaction as SchemaTransaction,
   TransactionCategory as SchemaCategory,
   User as SchemaUser,
@@ -61,4 +67,45 @@ export type TransactionModel = Omit<
 
 export type AuthPayloadModel = Omit<SchemaAuthPayload, '__typename' | 'user'> & {
   user: UserModel;
+};
+
+export type ScenarioEventModel = Omit<
+  Internal<SchemaScenarioEvent>,
+  'person' | 'category'
+> & {
+  person: PersonModel;
+  category: CategoryModel;
+};
+
+export type ScenarioModel = Omit<
+  Internal<SchemaScenario>,
+  // resolved separately by field resolvers, so a scenario can be listed without
+  // computing its grid
+  'account' | 'events' | 'grid'
+> & {
+  /** Kept so the Scenario.account field resolver can look the account up. */
+  accountId: number;
+};
+
+export type GridCellModel = Omit<SchemaGridCell, '__typename' | 'categoryId'> & {
+  categoryId: number;
+};
+
+export type GridRowModel = Omit<SchemaGridRow, '__typename' | 'person' | 'cells'> & {
+  person: PersonModel;
+  cells: GridCellModel[];
+};
+
+export type GridDataModel = Omit<SchemaGridData, '__typename' | 'rows'> & {
+  rows: GridRowModel[];
+};
+
+export type ScenarioGridModel = Omit<
+  SchemaScenarioGrid,
+  '__typename' | 'people' | 'categories' | 'baseline' | 'projected'
+> & {
+  people: PersonModel[];
+  categories: CategoryModel[];
+  baseline: GridDataModel;
+  projected: GridDataModel;
 };

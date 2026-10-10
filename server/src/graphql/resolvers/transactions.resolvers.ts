@@ -1,8 +1,15 @@
 import { GraphQLError } from 'graphql';
 import { requireAuth } from '../requireAuth.js';
-import { toAccount, toCategory, toPerson, toTotals, toTransaction, toTransactionWithRelations } from '../mappers.js';
+import {
+  toAccount,
+  toCategory,
+  toPerson,
+  toTotals,
+  toTransaction,
+  toTransactionFilter,
+  toTransactionWithRelations,
+} from '../mappers.js';
 import type { MutationResolvers, AccountResolvers, TransactionResolvers } from '../generated.js';
-import type { TransactionFilter as TransactionFilterInput } from '../generated.js';
 import {
   getTransactionsByAccount,
   getAccountTotals,
@@ -10,21 +17,11 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
-  type TransactionFilter,
 } from '../../db/repositories/transactionsRepo.js';
 import { getAccountById } from '../../db/repositories/accountsRepo.js';
 import { getPersonById } from '../../db/repositories/peopleRepo.js';
 import { getCategoryById } from '../../db/repositories/categoriesRepo.js';
 import type { GraphQLContext } from '../../context.js';
-
-/** GraphQL sends ids as strings; the repositories filter on integers. */
-function parseFilter(filter?: TransactionFilterInput | null): TransactionFilter | undefined {
-  if (!filter) return undefined;
-  return {
-    personIds: filter.personIds?.map((id) => parseInt(id, 10)),
-    categoryIds: filter.categoryIds?.map((id) => parseInt(id, 10)),
-  };
-}
 
 /** Loads the person and category for a transaction row, erroring if either is missing. */
 async function relationsFor(context: GraphQLContext, personId: number, categoryId: number) {
@@ -129,7 +126,7 @@ const Account: Pick<AccountResolvers, 'transactions' | 'totals'> = {
     const rows = await getTransactionsByAccount(
       context.pool,
       parent.id,
-      parseFilter(filter),
+      toTransactionFilter(filter),
       limit ?? undefined,
       offset ?? undefined
     );
@@ -137,7 +134,7 @@ const Account: Pick<AccountResolvers, 'transactions' | 'totals'> = {
   },
 
   totals: async (parent, { filter }, context) => {
-    return toTotals(await getAccountTotals(context.pool, parent.id, parseFilter(filter)));
+    return toTotals(await getAccountTotals(context.pool, parent.id, toTransactionFilter(filter)));
   },
 };
 

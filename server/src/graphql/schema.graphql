@@ -107,6 +107,126 @@ input UpdateTransactionInput {
   occurredOn: String
 }
 
+"""
+How often a scenario event repeats. Mirrored by a CHECK constraint on
+scenario_events.recurrence_unit and the union type in src/lib/recurrence.ts.
+"""
+enum RecurrenceUnit {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
+"""
+A planned contribution or withdrawal inside a scenario. Recurring when both
+recurrenceInterval and recurrenceUnit are set, one-time when both are null —
+the database rejects any half-specified pairing.
+"""
+type ScenarioEvent {
+  id: ID!
+  person: Person!
+  category: TransactionCategory!
+  amount: Float!
+  description: String
+  startDate: String!
+  "When this event stops repeating. Null means it runs to the scenario's end."
+  endDate: String
+  recurrenceInterval: Int
+  recurrenceUnit: RecurrenceUnit
+  createdAt: String!
+}
+
+type Scenario {
+  id: ID!
+  name: String!
+  account: Account!
+  startDate: String!
+  endDate: String!
+  events: [ScenarioEvent!]!
+  "Computed on request; the filter narrows both grids identically."
+  grid(filter: TransactionFilter): ScenarioGrid!
+  createdAt: String!
+}
+
+"""
+Two person × category grids over one shared pair of axes: the account on the
+scenario's start date, and the projection if every event occurs. Shared axes are
+what make the two tables comparable row by row.
+"""
+type ScenarioGrid {
+  "Row headings, shared by both grids."
+  people: [Person!]!
+  "Column headings, shared by both grids."
+  categories: [TransactionCategory!]!
+  baseline: GridData!
+  projected: GridData!
+}
+
+type GridData {
+  rows: [GridRow!]!
+  "Aligned to the shared categories axis."
+  columnTotals: [Float!]!
+  grandTotal: Float!
+}
+
+type GridRow {
+  person: Person!
+  cells: [GridCell!]!
+  total: Float!
+}
+
+"""
+Carries its categoryId rather than relying on position alone, so a client and
+server disagreeing about column order cannot silently file figures under the
+wrong heading.
+"""
+type GridCell {
+  categoryId: ID!
+  amount: Float!
+}
+
+input CreateScenarioInput {
+  accountId: ID!
+  name: String!
+  startDate: String!
+  endDate: String!
+}
+
+input UpdateScenarioInput {
+  name: String
+  startDate: String
+  endDate: String
+}
+
+input CreateScenarioEventInput {
+  scenarioId: ID!
+  personId: ID!
+  categoryId: ID!
+  amount: Float!
+  description: String
+  startDate: String!
+  endDate: String
+  recurrenceInterval: Int
+  recurrenceUnit: RecurrenceUnit
+}
+
+"""
+Omitting a field leaves it unchanged; passing null clears it. That distinction
+matters for endDate and the recurrence pair, since clearing both recurrence
+fields is how a repeating event becomes a one-time one.
+"""
+input UpdateScenarioEventInput {
+  personId: ID
+  categoryId: ID
+  amount: Float
+  description: String
+  startDate: String
+  endDate: String
+  recurrenceInterval: Int
+  recurrenceUnit: RecurrenceUnit
+}
+
 type Query {
   me: User
   accounts: [Account!]!
@@ -115,6 +235,8 @@ type Query {
   users: [User!]!
   user(id: ID!): User
   transactionCategories: [TransactionCategory!]!
+  scenario(id: ID!): Scenario
+  scenarios(accountId: ID!): [Scenario!]!
 }
 
 type Mutation {
@@ -137,4 +259,12 @@ type Mutation {
   createTransaction(input: CreateTransactionInput!): Transaction!
   updateTransaction(id: ID!, input: UpdateTransactionInput!): Transaction!
   deleteTransaction(id: ID!): Boolean!
+
+  createScenario(input: CreateScenarioInput!): Scenario!
+  updateScenario(id: ID!, input: UpdateScenarioInput!): Scenario!
+  deleteScenario(id: ID!): Boolean!
+
+  createScenarioEvent(input: CreateScenarioEventInput!): ScenarioEvent!
+  updateScenarioEvent(id: ID!, input: UpdateScenarioEventInput!): ScenarioEvent!
+  deleteScenarioEvent(id: ID!): Boolean!
 }

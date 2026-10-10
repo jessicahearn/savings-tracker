@@ -23,10 +23,22 @@ const config: CodegenConfig = {
           AccountTotals: `${models}#AccountTotalsModel`,
           User: `${models}#UserModel`,
           AuthPayload: `${models}#AuthPayloadModel`,
+          Scenario: `${models}#ScenarioModel`,
+          ScenarioEvent: `${models}#ScenarioEventModel`,
+          ScenarioGrid: `${models}#ScenarioGridModel`,
+          GridData: `${models}#GridDataModel`,
+          GridRow: `${models}#GridRowModel`,
+          GridCell: `${models}#GridCellModel`,
         },
 
         // Apollo Server 4 passes a resolver map that may carry extra keys.
         useIndexSignature: true,
+
+        // Emit enums as string unions ('DAY' | 'WEEK' | …) rather than a TS
+        // enum. Postgres stores and returns the bare strings, and
+        // lib/recurrence.ts declares the same union, so a real enum would mean
+        // casting at every boundary for no benefit.
+        enumsAsTypes: true,
       },
     },
   },
