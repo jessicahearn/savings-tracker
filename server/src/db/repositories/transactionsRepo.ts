@@ -152,6 +152,51 @@ export async function getAccountTotals(
   };
 }
 
+/** One cell of the scenario grid: what a person holds in a category. */
+export interface PersonCategoryBalance {
+  person_id: number;
+  category_id: number;
+  amount: number;
+}
+
+/**
+ * Running balance per person and category as at `asOf`, inclusive.
+ *
+ * This is the scenario baseline — "what each person has in each pot on the
+ * scenario's start date" — so the cutoff is `<= asOf` over all history, not a
+ * window. Combinations with no transactions are simply absent from the result;
+ * the grid builder fills those as zero.
+ *
+ * Shares applyFilter with the transaction list and totals, so a scenario grid
+ * and the account page can never interpret the same filter differently.
+ */
+export async function getBalancesByPersonCategory(
+  db: Queryable,
+  accountId: number,
+  asOf: string,
+  filter?: TransactionFilter
+): Promise<PersonCategoryBalance[]> {
+  const params: unknown[] = [accountId, asOf];
+
+  const { query } = applyFilter(
+    `SELECT person_id, category_id, COALESCE(SUM(amount), 0)::numeric AS amount
+     FROM transactions
+     WHERE account_id = $1
+       AND occurred_on <= $2`,
+    params,
+    filter,
+    ''
+  );
+
+  const result = await db.query(`${query} GROUP BY person_id, category_id`, params);
+
+  return result.rows.map((row) => ({
+    person_id: row.person_id,
+    category_id: row.category_id,
+    amount: parseFloat(row.amount),
+  }));
+}
+
 export async function getTransactionById(db: Queryable, id: number): Promise<Transaction | null> {
   const result = await db.query(`SELECT * FROM transactions WHERE id = $1`, [id]);
   return result.rows[0] || null;
