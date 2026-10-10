@@ -11,6 +11,8 @@
     "codegen:watch": "graphql-codegen --watch",
     "start": "node dist/index.js",
     "migrate": "node-pg-migrate --envPath ../.env",
+    "migrate:test": "node-pg-migrate --envPath ../.env -d TEST_DATABASE_URL",
+    "db:test:prepare": "tsx scripts/prepareTestDb.ts && npm run migrate:test up",
     "test": "vitest run"
   },
   "dependencies": {

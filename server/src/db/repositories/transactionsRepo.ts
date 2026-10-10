@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import type { Queryable } from '../queryable.js';
 
 export interface Transaction {
   id: number;
@@ -84,7 +84,7 @@ function applyFilter(
 }
 
 export async function getTransactionsByAccount(
-  pool: Pool,
+  db: Queryable,
   accountId: number,
   filter?: TransactionFilter,
   limit?: number,
@@ -120,12 +120,12 @@ export async function getTransactionsByAccount(
     params.push(offset);
   }
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   return result.rows;
 }
 
 export async function getAccountTotals(
-  pool: Pool,
+  db: Queryable,
   accountId: number,
   filter?: TransactionFilter
 ): Promise<AccountTotals> {
@@ -143,7 +143,7 @@ export async function getAccountTotals(
     ''
   );
 
-  const row = (await pool.query(query, params)).rows[0];
+  const row = (await db.query(query, params)).rows[0];
 
   return {
     totalCredits: parseFloat(row.total_credits) || 0,
@@ -152,16 +152,16 @@ export async function getAccountTotals(
   };
 }
 
-export async function getTransactionById(pool: Pool, id: number): Promise<Transaction | null> {
-  const result = await pool.query(`SELECT * FROM transactions WHERE id = $1`, [id]);
+export async function getTransactionById(db: Queryable, id: number): Promise<Transaction | null> {
+  const result = await db.query(`SELECT * FROM transactions WHERE id = $1`, [id]);
   return result.rows[0] || null;
 }
 
 export async function createTransaction(
-  pool: Pool,
+  db: Queryable,
   data: CreateTransactionData
 ): Promise<Transaction> {
-  const result = await pool.query(
+  const result = await db.query(
     `INSERT INTO transactions (account_id, person_id, category_id, amount, description, occurred_on)
      VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
      RETURNING *`,
@@ -178,14 +178,14 @@ export async function createTransaction(
 }
 
 export async function updateTransaction(
-  pool: Pool,
+  db: Queryable,
   id: number,
   data: UpdateTransactionData
 ): Promise<Transaction | null> {
-  const existing = await getTransactionById(pool, id);
+  const existing = await getTransactionById(db, id);
   if (!existing) return null;
 
-  const result = await pool.query(
+  const result = await db.query(
     `UPDATE transactions
      SET person_id = $1, category_id = $2, amount = $3, description = $4,
          occurred_on = $5, updated_at = now()
@@ -203,7 +203,7 @@ export async function updateTransaction(
   return result.rows[0] || null;
 }
 
-export async function deleteTransaction(pool: Pool, id: number): Promise<boolean> {
-  const result = await pool.query(`DELETE FROM transactions WHERE id = $1`, [id]);
+export async function deleteTransaction(db: Queryable, id: number): Promise<boolean> {
+  const result = await db.query(`DELETE FROM transactions WHERE id = $1`, [id]);
   return result.rowCount !== null && result.rowCount > 0;
 }
