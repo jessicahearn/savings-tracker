@@ -10,7 +10,7 @@
     "codegen": "graphql-codegen",
     "codegen:watch": "graphql-codegen --watch",
     "start": "node dist/index.js",
-    "migrate": "node-pg-migrate",
+    "migrate": "node-pg-migrate --envPath ../.env",
     "test": "vitest run"
   },
   "dependencies": {
