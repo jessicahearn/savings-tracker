@@ -1,15 +1,18 @@
 import { Navbar, Nav } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useMeQuery, useSignOutMutation } from '../graphql/generated';
+import { useApolloClient } from '@apollo/client';
 
 export function NavBar() {
   const { data } = useMeQuery();
   const [signOut] = useSignOutMutation();
   const navigate = useNavigate();
+  const client = useApolloClient();
 
   const handleSignOut = async () => {
     try {
       await signOut();
+      await client.resetStore();
       navigate('/login');
     } catch (error) {
       console.error('Sign out failed:', error);

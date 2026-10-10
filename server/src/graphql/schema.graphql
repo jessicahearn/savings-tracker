@@ -112,6 +112,8 @@ type Query {
   accounts: [Account!]!
   account(id: ID!): Account
   people: [Person!]!
+  users: [User!]!
+  user(id: ID!): User
   transactionCategories: [TransactionCategory!]!
 }
 

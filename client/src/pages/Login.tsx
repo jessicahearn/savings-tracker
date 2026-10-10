@@ -8,7 +8,10 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const [signIn, { loading }] = useSignInMutation();
+  const [signIn, { loading }] = useSignInMutation({
+    refetchQueries: ['Me'],
+    awaitRefetchQueries: true,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

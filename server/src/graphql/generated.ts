@@ -178,10 +178,17 @@ export type Query = {
   me?: Maybe<User>;
   people: Array<Person>;
   transactionCategories: Array<TransactionCategory>;
+  user?: Maybe<User>;
+  users: Array<User>;
 };
 
 
 export type QueryAccountArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryUserArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -428,6 +435,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   people?: Resolver<Array<ResolversTypes['Person']>, ParentType, ContextType>;
   transactionCategories?: Resolver<Array<ResolversTypes['TransactionCategory']>, ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>;
+  users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 }>;
 
 export type TransactionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Transaction'] = ResolversParentTypes['Transaction']> = ResolversObject<{

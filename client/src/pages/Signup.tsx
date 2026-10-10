@@ -9,7 +9,10 @@ export function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const [signup, { loading }] = useSignupMutation();
+  const [signup, { loading }] = useSignupMutation({
+    refetchQueries: ['Me'],
+    awaitRefetchQueries: true,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

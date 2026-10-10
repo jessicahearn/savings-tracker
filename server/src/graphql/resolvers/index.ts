@@ -4,6 +4,7 @@ import { peopleResolvers } from './people.resolvers.js';
 import { categoriesResolvers } from './categories.resolvers.js';
 import { accountsResolvers } from './accounts.resolvers.js';
 import { transactionsResolvers } from './transactions.resolvers.js';
+import { usersResolvers } from './users.resolvers.js';
 
 /**
  * Annotated with the generated `Resolvers` type, so the assembled map is checked
@@ -20,6 +21,7 @@ export const resolvers: Resolvers = {
     ...peopleResolvers.Query,
     ...categoriesResolvers.Query,
     ...accountsResolvers.Query,
+    ...usersResolvers.Query,
   },
   Mutation: {
     ...authResolvers.Mutation,
