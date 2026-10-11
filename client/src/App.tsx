@@ -8,6 +8,8 @@ import { AccountsList } from './pages/AccountsList';
 import { AccountDetail } from './pages/AccountDetail';
 import { PeopleManagement } from './pages/PeopleManagement';
 import { CategoriesManagement } from './pages/CategoriesManagement';
+import { ScenariosList } from './pages/ScenariosList';
+import { ScenarioDetail } from './pages/ScenarioDetail';
 
 export function App() {
   return (
@@ -46,6 +48,22 @@ export function App() {
             element={
               <ProtectedRoute>
                 <CategoriesManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:accountId/scenarios"
+            element={
+              <ProtectedRoute>
+                <ScenariosList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scenarios/:id"
+            element={
+              <ProtectedRoute>
+                <ScenarioDetail />
               </ProtectedRoute>
             }
           />

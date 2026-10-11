@@ -120,9 +120,14 @@ export function AccountDetail() {
   return (
     <div>
       <div className="mb-4">
-        <Button variant="outline-primary" onClick={() => navigate('/')} className="mb-3">
-          ← Back to Accounts
-        </Button>
+        <div className="d-flex justify-content-between align-items-start mb-3">
+          <Button variant="outline-primary" onClick={() => navigate('/')}>
+            ← Back to Accounts
+          </Button>
+          <Button variant="primary" onClick={() => navigate(`/accounts/${id}/scenarios`)}>
+            Scenarios
+          </Button>
+        </div>
         <h2>{account.name}</h2>
         {account.description && <p className="text-muted">{account.description}</p>}
       </div>

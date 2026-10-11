@@ -1,0 +1,53 @@
+query GetScenarios($accountId: ID!) {
+  scenarios(accountId: $accountId) {
+    ...ScenarioFields
+  }
+}
+
+query GetScenarioDetail($id: ID!, $filter: TransactionFilter) {
+  scenario(id: $id) {
+    ...ScenarioFields
+    account {
+      id
+      name
+    }
+    events {
+      ...ScenarioEventFields
+    }
+    grid(filter: $filter) {
+      ...ScenarioGridFields
+    }
+  }
+}
+
+mutation CreateScenario($input: CreateScenarioInput!) {
+  createScenario(input: $input) {
+    ...ScenarioFields
+  }
+}
+
+mutation UpdateScenario($id: ID!, $input: UpdateScenarioInput!) {
+  updateScenario(id: $id, input: $input) {
+    ...ScenarioFields
+  }
+}
+
+mutation DeleteScenario($id: ID!) {
+  deleteScenario(id: $id)
+}
+
+mutation CreateScenarioEvent($input: CreateScenarioEventInput!) {
+  createScenarioEvent(input: $input) {
+    ...ScenarioEventFields
+  }
+}
+
+mutation UpdateScenarioEvent($id: ID!, $input: UpdateScenarioEventInput!) {
+  updateScenarioEvent(id: $id, input: $input) {
+    ...ScenarioEventFields
+  }
+}
+
+mutation DeleteScenarioEvent($id: ID!) {
+  deleteScenarioEvent(id: $id)
+}

@@ -44,3 +44,58 @@ fragment TransactionFields on Transaction {
     ...CategoryFields
   }
 }
+
+fragment ScenarioFields on Scenario {
+  id
+  name
+  startDate
+  endDate
+  createdAt
+}
+
+fragment ScenarioEventFields on ScenarioEvent {
+  id
+  amount
+  description
+  startDate
+  endDate
+  recurrenceInterval
+  recurrenceUnit
+  createdAt
+  person {
+    ...PersonFields
+  }
+  category {
+    ...CategoryFields
+  }
+}
+
+fragment GridDataFields on GridData {
+  rows {
+    person {
+      ...PersonFields
+    }
+    cells {
+      categoryId
+      amount
+    }
+    total
+  }
+  columnTotals
+  grandTotal
+}
+
+fragment ScenarioGridFields on ScenarioGrid {
+  people {
+    ...PersonFields
+  }
+  categories {
+    ...CategoryFields
+  }
+  baseline {
+    ...GridDataFields
+  }
+  projected {
+    ...GridDataFields
+  }
+}
