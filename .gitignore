@@ -20,6 +20,7 @@ yarn-error.log*
 client/dist/
 server/dist/
 coverage/
+ARCHITECTURE.md
 
 # Stray tsc output next to sources (src/ should only ever contain .ts/.tsx)
 client/src/**/*.js
