@@ -9,7 +9,11 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.prod
 .vscode/
+
+# Machine-local Claude Code permissions, not shared project config
+.claude/settings.local.json
 .idea/
 *.swp
 *.swo

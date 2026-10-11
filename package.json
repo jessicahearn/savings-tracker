@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Home savings tracking app",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "client",
     "server"

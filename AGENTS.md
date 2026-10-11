@@ -2,7 +2,7 @@
 
 ## GitHub
 
-**Repository:** https://github.com/jessicahearn/savings-tracker (private)
+**Repository:** https://github.com/jessicahearn/savings-tracker (public)
 
 **Authentication:**
 - Method: SSH via GitHub CLI (`gh` CLI)
@@ -11,7 +11,6 @@
 - Expected scopes: `repo` (and others)
 
 **Key workflows:**
-- Create a private repo: `gh repo create savings-tracker --private --source=. --remote=origin --push`
 - Push to main: `git push origin main`
 - Create a PR: `gh pr create --title "..." --body "..."`
 - List PRs: `gh pr list`
@@ -23,7 +22,10 @@
 
 **Notes for future sessions:**
 - If `gh auth status` fails, run `gh auth login` and select "Authenticate with GitHub using SSH"
-- The repo is private; ensure any pushes include meaningful commit messages with co-author line:
+- **The repo is public.** Never commit real credentials, connection strings, hostnames or
+  LAN addresses. Secrets belong in the gitignored `.env` / `.env.prod`; `.env.example`
+  holds placeholders only.
+- Include meaningful commit messages with a co-author line:
   ```
   Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
   ```

@@ -14,7 +14,7 @@ function notFound(): never {
 
 const Query: Pick<QueryResolvers, 'users' | 'user'> = {
   users: async (_parent, _args, context) => {
-    // requireAuth(context);
+    requireAuth(context);
     const users = await getAllUsers(context.pool);
     return users.map(toUser);
   },

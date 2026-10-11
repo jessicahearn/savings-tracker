@@ -25,6 +25,14 @@ const typeDefs = readFileSync(join(__dirname, 'graphql', 'schema.graphql'), 'utf
 async function startServer() {
   const pool = createPool();
 
+  if (process.env.NODE_ENV === 'production') {
+    // Caddy terminates TLS and forwards plain HTTP. Without this Express treats
+    // the request as insecure and silently declines to send the session cookie,
+    // which has `secure: true` in production — sign-in appears to succeed and
+    // then every subsequent request is unauthenticated.
+    app.set('trust proxy', 1);
+  }
+
   app.use(express.json());
   app.use(createSessionMiddleware(pool));
 
@@ -45,6 +53,21 @@ async function startServer() {
       context: async ({ req }) => createContext(req, pool),
     })
   );
+
+  if (process.env.NODE_ENV === 'production') {
+    // Serving the built client from the API keeps the browser same-origin,
+    // which is what lets apolloClient.ts use a relative '/graphql' and lets the
+    // session cookie work with sameSite: 'lax'. A split origin would need CORS
+    // and sameSite: 'none'.
+    const clientDist = join(projectRoot, 'client', 'dist');
+    app.use(express.static(clientDist));
+
+    // Registered after /graphql, or it would swallow the API. Every unmatched
+    // path returns index.html so client-side routes survive a page reload.
+    app.get('*', (_req, res) => {
+      res.sendFile(join(clientDist, 'index.html'));
+    });
+  }
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
