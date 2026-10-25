@@ -143,11 +143,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    Without it, phones on the wifi resolve the hostname to the public IP and many routers
    will not route that back inward. Set it on the router if it supports local DNS entries,
    otherwise run Pi-hole or AdGuard Home.
-6. **Make the published image public** (once): GitHub → Packages → `savings-tracker` →
-   Package settings → Change visibility → Public. New GHCR packages are private by
-   default, so without this the pull fails with "denied". The image contains only built
-   code from this public repository. The alternative is leaving it private and running
-   `docker login ghcr.io` on the mini-PC with a token holding `read:packages`.
+6. **No registry login needed.** The published image inherited this repository's public
+   visibility, so the mini-PC pulls it anonymously (verified against ghcr.io). If that
+   ever changes, run `docker login ghcr.io` there with a token holding `read:packages`.
 7. Copy the four files over, then start it:
 
    ```powershell
