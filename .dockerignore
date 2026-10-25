@@ -1,0 +1,36 @@
+# Installed and built inside the image, never copied in.
+node_modules
+**/node_modules
+dist
+**/dist
+
+# The published image is PUBLIC, like the repository. Nothing secret may reach
+# it. This is the enforcing rule, not a size optimisation.
+.env
+.env.*
+
+# Tests run in CI, not in the image. Keeping them out of the build context also
+# keeps compiled test files out of server/dist, where they would import vitest —
+# a devDependency that `npm ci --omit=dev` strips from the runtime stage.
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/vitest.config.ts
+**/vitest.setup.ts
+
+# Deploy, tooling and docs: not needed to build or run the app.
+.git
+.gitignore
+.github
+.dockerignore
+Dockerfile
+docker-compose*.yml
+Caddyfile
+deploy.ps1
+.claude
+coverage
+*.log
+.DS_Store
+README.md
+AGENTS.md
+ARCHITECTURE.md

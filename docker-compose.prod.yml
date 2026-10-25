@@ -1,0 +1,77 @@
+# Production stack for the mini-PC. Always pass the env file explicitly:
+#
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod <command>
+#
+# deploy.ps1 wraps that. The --env-file is required for the ${...} substitutions
+# below; Compose does not read .env.prod automatically.
+
+services:
+  # No published ports: Postgres is reachable only from the other containers on
+  # this network, so nothing on the LAN can connect to it directly.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # The one piece of state that must outlive every container here.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ghcr.io/jessicahearn/savings-tracker:latest
+    restart: unless-stopped
+    # Node as PID 1 ignores SIGTERM, so without an init process `docker stop`
+    # waits the full timeout before killing it on every deploy.
+    init: true
+    env_file: .env.prod
+    environment:
+      # Built here rather than stored in .env.prod so the password lives in
+      # exactly one place and cannot drift from POSTGRES_PASSWORD.
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      NODE_ENV: production
+      PORT: 4000
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - '4000'
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:4000/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      APP_HOSTNAME: ${APP_HOSTNAME}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # caddy_data holds the TLS certificate and account key. Without this
+      # volume Caddy re-requests a certificate on every restart and will
+      # eventually hit Let's Encrypt's rate limit, locking the app out for days.
+      - caddy_data:/data
+      - caddy_config:/config
+    # Deliberately service_started, not service_healthy: Caddy must come up even
+    # when the app is broken, both to serve a clear error and to keep renewing
+    # the certificate.
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

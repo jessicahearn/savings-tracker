@@ -1,0 +1,13 @@
+# The hostname is supplied by APP_HOSTNAME from .env.prod, so the real address
+# of the machine never enters this public repository.
+#
+# Caddy obtains and renews the Let's Encrypt certificate on its own and
+# redirects HTTP to HTTPS. The ACME challenge arrives on port 80, which is why
+# that port is forwarded on the router even though the app itself is LAN-only.
+{$APP_HOSTNAME} {
+	# Express serves client/dist uncompressed; compressing here takes the JS
+	# bundle from ~457 kB to ~137 kB over the wire.
+	encode gzip
+
+	reverse_proxy api:4000
+}
